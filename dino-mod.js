@@ -64,34 +64,32 @@ javascript:(() => {
   const scoreDisplay = document.getElementById('scoreDisplay');
   const closeBtn = document.getElementById('closeDinoMod');
 
-  // Atualiza a velocidade no Runner
   function updateSpeed() {
     if (window.Runner && Runner.instance_) {
       Runner.instance_.setSpeed(speed);
     }
   }
 
-  // Torna o dino invencível (desativa game over)
   function toggleInvincible(on) {
     if (window.Runner && Runner.instance_) {
       if (on) {
         Runner.instance_.gameOver = () => {};
       } else {
-        // Recarrega a página para resetar o gameOver original (simples e rápido)
         location.reload();
       }
     }
   }
 
-  // Atualiza a pontuação exibida
+  // Agora pega a pontuação lendo o texto da div score-container
   function updateScore() {
-    if (window.Runner && Runner.instance_ && Runner.instance_.distanceMeter) {
-      const dist = Runner.instance_.distanceMeter.getActualDistance();
-      scoreDisplay.textContent = dist.toFixed(0);
+    const scoreContainer = document.querySelector('.score-container');
+    if (scoreContainer) {
+      scoreDisplay.textContent = scoreContainer.textContent.trim();
+    } else {
+      scoreDisplay.textContent = '0';
     }
   }
 
-  // Loop principal que atualiza o jogo e UI
   let loopId;
   function mainLoop() {
     updateSpeed();
@@ -100,7 +98,6 @@ javascript:(() => {
     loopId = requestAnimationFrame(mainLoop);
   }
 
-  // Eventos UI
   speedRange.addEventListener('input', e => {
     speed = Number(e.target.value);
     speedValue.textContent = speed;
