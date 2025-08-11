@@ -5,18 +5,17 @@ function startAutoBot() {
   const canvas = document.querySelector('canvas.runner-canvas');
   if (!canvas) return;
 
-  const ctx = canvas.getContext('2d');
   const dino = Runner.instance_.tRex;
 
   botInterval = setInterval(() => {
     if (!autoBot || !Runner.instance_ || Runner.instance_.crashed) return;
 
-    // Só pula se não estiver pulando e estiver no chão (groundYPos é o y normal do chão)
     if (!dino.jumping && !dino.ducking && dino.yPos === dino.groundYPos) {
+      // Detectar obstáculos
+      const ctx = canvas.getContext('2d');
       const startX = 90;
       const width = 30;
       const height = 30;
-
       const imageData = ctx.getImageData(startX, canvas.height - height - 10, width, height);
 
       let obstacleFound = false;
@@ -32,7 +31,11 @@ function startAutoBot() {
       }
 
       if(obstacleFound) {
-        dino.startJump();
+        // Simular tecla "espaço" para pular
+        const keyboardEventDown = new KeyboardEvent('keydown', { keyCode: 32, which: 32 });
+        const keyboardEventUp = new KeyboardEvent('keyup', { keyCode: 32, which: 32 });
+        window.dispatchEvent(keyboardEventDown);
+        window.dispatchEvent(keyboardEventUp);
       }
     }
   }, 50);
