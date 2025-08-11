@@ -1,135 +1,124 @@
-(() => {
-  if (window.dinoModMenu) return; // evita múltiplas execuções
+javascript:(() => {
+  if (window.dinoModActive) return alert('Script já ativo!');
+  window.dinoModActive = true;
 
-  const Runner = window.Runner || window.RunnerInstance || window.Runner.prototype.gameOver ? window.Runner : null;
-  if (!Runner && !window.Runner.instance_) {
-    alert('Não encontrou o jogo do dinossauro nesta página.');
-    return;
-  }
-
-  const runnerInstance = window.Runner.instance_;
-
-  // Estado do menu
-  let invincible = false;
-  let autoJump = false;
-  let autoJumpInterval = null;
-
-  // Função para alterar velocidade
-  function setSpeed(value) {
-    if (runnerInstance) {
-      runnerInstance.currentSpeed = value;
-      runnerInstance.setSpeed && runnerInstance.setSpeed(value);
+  const style = document.createElement('style');
+  style.textContent = `
+    #dinoModMenu {
+      position: fixed;
+      top: 20px; right: 20px;
+      background: #222;
+      color: #eee;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: Arial, sans-serif;
+      z-index: 99999;
+      width: 220px;
+      box-shadow: 0 0 10px #000a;
     }
-  }
-
-  // Invencibilidade
-  function enableInvincible() {
-    Runner.prototype.gameOver = function () {
-      // Ignora game over
-      // Pode exibir um console.log ou nada
-    };
-  }
-
-  function disableInvincible() {
-    location.reload(); // para resetar comportamento padrão
-  }
-
-  // Bot automático simples: pula ao detectar obstáculos próximos
-  function startAutoJump() {
-    if (!runnerInstance) return;
-    autoJumpInterval = setInterval(() => {
-      const tRex = runnerInstance.tRex;
-      const obstacles = runnerInstance.horizon.obstacles;
-      if (obstacles.length > 0) {
-        const obstacle = obstacles[0];
-        const distance = obstacle.xPos - tRex.xPos;
-        if (distance < 60 && tRex.jumping === false) {
-          tRex.startJump();
-        }
-      }
-    }, 50);
-  }
-
-  function stopAutoJump() {
-    clearInterval(autoJumpInterval);
-    autoJumpInterval = null;
-  }
-
-  // Criar menu
-  const menu = document.createElement('div');
-  menu.style = `
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background: rgba(0,0,0,0.8);
-    color: white;
-    padding: 10px;
-    font-family: monospace;
-    z-index: 99999;
-    border-radius: 8px;
-    width: 220px;
+    #dinoModMenu button {
+      background: #775ce3;
+      border: none;
+      color: white;
+      padding: 8px;
+      margin-top: 10px;
+      width: 100%;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #dinoModMenu label {
+      display: block;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    #dinoModMenu input[type=range] {
+      width: 100%;
+    }
   `;
+  document.head.appendChild(style);
 
-  // Título
-  const title = document.createElement('div');
-  title.textContent = 'Dino Mod Menu';
-  title.style.fontWeight = 'bold';
-  title.style.marginBottom = '10px';
-  menu.appendChild(title);
-
-  // Velocidade
-  const speedLabel = document.createElement('label');
-  speedLabel.textContent = 'Velocidade: ';
-  menu.appendChild(speedLabel);
-
-  const speedInput = document.createElement('input');
-  speedInput.type = 'number';
-  speedInput.min = 1;
-  speedInput.max = 1000;
-  speedInput.value = runnerInstance.currentSpeed.toFixed(2);
-  speedInput.style.width = '60px';
-  speedInput.style.marginBottom = '10px';
-  speedInput.onchange = () => {
-    const val = parseFloat(speedInput.value);
-    if (!isNaN(val)) setSpeed(val);
-  };
-  menu.appendChild(speedInput);
-
-  menu.appendChild(document.createElement('br'));
-
-  // Invencível
-  const invincibleBtn = document.createElement('button');
-  invincibleBtn.textContent = 'Invencível OFF';
-  invincibleBtn.style.width = '100%';
-  invincibleBtn.style.marginBottom = '10px';
-  invincibleBtn.onclick = () => {
-    invincible = !invincible;
-    if (invincible) {
-      enableInvincible();
-      invincibleBtn.textContent = 'Invencível ON';
-    } else {
-      disableInvincible();
-      invincibleBtn.textContent = 'Invencível OFF';
-    }
-  };
-  menu.appendChild(invincibleBtn);
-
-  // Auto jump
-  const autoJumpBtn = document.createElement('button');
-  autoJumpBtn.textContent = 'Auto Jump OFF';
-  autoJumpBtn.style.width = '100%';
-  autoJumpBtn.onclick = () => {
-    autoJump = !autoJump;
-    if (autoJump) {
-      startAutoJump();
-      autoJumpBtn.textContent = 'Auto Jump ON';
-    } else {
-      stopAutoJump();
-      autoJumpBtn.textContent = 'Auto Jump OFF';
-    }
-  };
-  menu.appendChild(autoJumpBtn);
-
+  const menu = document.createElement('div');
+  menu.id = 'dinoModMenu';
+  menu.innerHTML = `
+    <div><b>Dino Mod</b></div>
+    <label>
+      Velocidade: <span id="speedValue">10</span>
+      <input type="range" min="5" max="50" value="10" id="speedRange" />
+    </label>
+    <label>
+      <input type="checkbox" id="invincibleCheckbox" />
+      Invencível
+    </label>
+    <div>Pontuação: <span id="scoreDisplay">0</span></div>
+    <button id="closeDinoMod">Fechar</button>
+  `;
   document.body.appendChild(menu);
-  window.dinoModMenu = menu;
+
+  let speed = 10;
+  let invincible = false;
+
+  const speedRange = document.getElementById('speedRange');
+  const speedValue = document.getElementById('speedValue');
+  const invincibleCheckbox = document.getElementById('invincibleCheckbox');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const closeBtn = document.getElementById('closeDinoMod');
+
+  // Atualiza a velocidade no Runner
+  function updateSpeed() {
+    if (window.Runner && Runner.instance_) {
+      Runner.instance_.setSpeed(speed);
+    }
+  }
+
+  // Torna o dino invencível (desativa game over)
+  function toggleInvincible(on) {
+    if (window.Runner && Runner.instance_) {
+      if (on) {
+        Runner.instance_.gameOver = () => {};
+      } else {
+        // Recarrega a página para resetar o gameOver original (simples e rápido)
+        location.reload();
+      }
+    }
+  }
+
+  // Atualiza a pontuação exibida
+  function updateScore() {
+    if (window.Runner && Runner.instance_ && Runner.instance_.distanceMeter) {
+      const dist = Runner.instance_.distanceMeter.getActualDistance();
+      scoreDisplay.textContent = dist.toFixed(0);
+    }
+  }
+
+  // Loop principal que atualiza o jogo e UI
+  let loopId;
+  function mainLoop() {
+    updateSpeed();
+    updateScore();
+    if (invincible) toggleInvincible(true);
+    loopId = requestAnimationFrame(mainLoop);
+  }
+
+  // Eventos UI
+  speedRange.addEventListener('input', e => {
+    speed = Number(e.target.value);
+    speedValue.textContent = speed;
+    updateSpeed();
+  });
+
+  invincibleCheckbox.addEventListener('change', e => {
+    invincible = e.target.checked;
+    toggleInvincible(invincible);
+  });
+
+  closeBtn.addEventListener('click', () => {
+    cancelAnimationFrame(loopId);
+    window.dinoModActive = false;
+    menu.remove();
+    style.remove();
+    location.reload();
+  });
+
+  mainLoop();
 })();
