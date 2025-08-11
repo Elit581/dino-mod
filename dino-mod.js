@@ -50,13 +50,14 @@ javascript:(() => {
       <input type="checkbox" id="invincibleCheckbox" />
       Invencível
     </label>
-    <div>Pontuação: <span id="scoreDisplay">0</span></div>
+    <div>Pontuação máxima: <span id="scoreDisplay">0</span></div>
     <button id="closeDinoMod">Fechar</button>
   `;
   document.body.appendChild(menu);
 
   let speed = 10;
   let invincible = false;
+  let maxScore = 0;
 
   const speedRange = document.getElementById('speedRange');
   const speedValue = document.getElementById('speedValue');
@@ -80,13 +81,15 @@ javascript:(() => {
     }
   }
 
-  // Agora pega a pontuação lendo o texto da div score-container
+  // Atualiza pontuação máxima sem resetar no game over
   function updateScore() {
     const scoreContainer = document.querySelector('.score-container');
     if (scoreContainer) {
-      scoreDisplay.textContent = scoreContainer.textContent.trim();
+      const currentScore = parseInt(scoreContainer.textContent.trim()) || 0;
+      if (currentScore > maxScore) maxScore = currentScore;
+      scoreDisplay.textContent = maxScore;
     } else {
-      scoreDisplay.textContent = '0';
+      scoreDisplay.textContent = maxScore;
     }
   }
 
