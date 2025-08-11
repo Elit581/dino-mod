@@ -1,141 +1,18 @@
-(() => {
-  if (window.dinoModActive) return alert('Script já ativo!');
-  window.dinoModActive = true;
+function startAutoBot() {
+  if (!window.Runner || !Runner.instance_) return;
+  if (botInterval) return;
 
-  const style = document.createElement('style');
-  style.textContent = `
-    #dinoModMenu {
-      position: fixed;
-      top: 20px; right: 20px;
-      background: #222;
-      color: #eee;
-      padding: 15px;
-      border-radius: 8px;
-      font-family: Arial, sans-serif;
-      z-index: 99999;
-      width: 260px;
-      box-shadow: 0 0 10px #000a;
-      user-select: none;
-    }
-    #dinoModMenu button, #dinoModMenu input[type=checkbox], #dinoModMenu input[type=number] {
-      cursor: pointer;
-    }
-    #dinoModMenu button {
-      background: #775ce3;
-      border: none;
-      color: white;
-      padding: 8px;
-      margin-top: 10px;
-      width: 100%;
-      border-radius: 4px;
-      font-weight: bold;
-      user-select: none;
-    }
-    #dinoModMenu label {
-      display: block;
-      margin-top: 10px;
-      font-size: 14px;
-      user-select: none;
-    }
-    #dinoModMenu input[type=number] {
-      width: 100%;
-      padding: 5px;
-      border-radius: 4px;
-      border: none;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-  `;
-  document.head.appendChild(style);
+  const canvas = document.querySelector('canvas.runner-canvas');
+  if (!canvas) return;
 
-  const menu = document.createElement('div');
-  menu.id = 'dinoModMenu';
-  menu.innerHTML = `
-    <div><b>Dino Mod v2</b></div>
-    
-    <label>
-      Velocidade (5 a 100):
-      <input type="number" min="5" max="100" value="10" id="speedInput" />
-    </label>
-    
-    <label>
-      <input type="checkbox" id="invincibleCheckbox" />
-      Invencível discreto
-    </label>
-    
-    <label>
-      <input type="checkbox" id="autoBotCheckbox" />
-      Bot automático (pula sozinho)
-    </label>
-    
-    <div>Pontuação máxima: <span id="scoreDisplay">0</span></div>
-    
-    <button id="closeDinoMod">Fechar</button>
-  `;
-  document.body.appendChild(menu);
+  const ctx = canvas.getContext('2d');
+  const dino = Runner.instance_.tRex;
 
-  // Aqui você define a velocidade inicial (mas pode mudar no input)
-  let speed = 10;
-  let invincible = false;
-  let autoBot = false;
-  let maxScore = 0;
-  let loopId;
-  let botInterval;
+  botInterval = setInterval(() => {
+    if (!autoBot || !Runner.instance_ || Runner.instance_.crashed) return;
 
-  const speedInput = document.getElementById('speedInput');
-  const invincibleCheckbox = document.getElementById('invincibleCheckbox');
-  const autoBotCheckbox = document.getElementById('autoBotCheckbox');
-  const scoreDisplay = document.getElementById('scoreDisplay');
-  const closeBtn = document.getElementById('closeDinoMod');
-
-  function updateSpeed() {
-    if (window.Runner && Runner.instance_) {
-      Runner.instance_.setSpeed(speed);
-    }
-  }
-
-  let originalGameOver;
-  function enableInvincible() {
-    if (!window.Runner || !Runner.instance_) return;
-    if (!originalGameOver) {
-      originalGameOver = Runner.instance_.gameOver.bind(Runner.instance_);
-      Runner.instance_.gameOver = function() {
-        if (!invincible) {
-          originalGameOver();
-        }
-      };
-    }
-  }
-  function disableInvincible() {
-    if (!window.Runner || !Runner.instance_) return;
-    if (originalGameOver) {
-      Runner.instance_.gameOver = originalGameOver;
-      originalGameOver = null;
-    }
-  }
-
-  function toggleInvincible(on) {
-    invincible = on;
-    if (invincible) {
-      enableInvincible();
-    } else {
-      disableInvincible();
-    }
-  }
-
-  function startAutoBot() {
-    if (!window.Runner || !Runner.instance_) return;
-    if (botInterval) return;
-
-    const canvas = document.querySelector('canvas.runner-canvas');
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    const dino = Runner.instance_.tRex;
-
-    botInterval = setInterval(() => {
-      if (!autoBot || !Runner.instance_ || Runner.instance_.crashed) return;
-
+    // Só pula se não estiver pulando e estiver no chão (groundYPos é o y normal do chão)
+    if (!dino.jumping && !dino.ducking && dino.yPos === dino.groundYPos) {
       const startX = 90;
       const width = 30;
       const height = 30;
@@ -154,74 +31,9 @@
         }
       }
 
-      if(obstacleFound && !dino.jumping && !dino.ducking) {
+      if(obstacleFound) {
         dino.startJump();
       }
-    }, 50);
-  }
-
-  function stopAutoBot() {
-    if (botInterval) {
-      clearInterval(botInterval);
-      botInterval = null;
     }
-    if (window.Runner && Runner.instance_ && Runner.instance_.tRex) {
-      const dino = Runner.instance_.tRex;
-      dino.jumping = false;
-      dino.ducking = false;
-      dino.groundYPos = Runner.instance_.config.BOTTOM_PAD;
-      dino.setDuck(false);
-      dino.update(0, 0);
-    }
-  }
-
-  function updateScore() {
-    const scoreContainer = document.querySelector('.score-container');
-    if (scoreContainer) {
-      const currentScore = parseInt(scoreContainer.textContent.trim()) || 0;
-      if (currentScore > maxScore) maxScore = currentScore;
-      scoreDisplay.textContent = maxScore;
-    } else {
-      scoreDisplay.textContent = maxScore;
-    }
-  }
-
-  function mainLoop() {
-    updateSpeed();
-    updateScore();
-    if (invincible) enableInvincible();
-    if (autoBot) startAutoBot();
-    else stopAutoBot();
-    loopId = requestAnimationFrame(mainLoop);
-  }
-
-  speedInput.addEventListener('input', e => {
-    let val = Number(e.target.value);
-    if (val < 5) val = 5;
-    if (val > 100) val = 100;
-    speed = val;
-    speedInput.value = val;
-    updateSpeed();
-  });
-
-  invincibleCheckbox.addEventListener('change', e => {
-    toggleInvincible(e.target.checked);
-  });
-
-  autoBotCheckbox.addEventListener('change', e => {
-    autoBot = e.target.checked;
-    if (!autoBot) stopAutoBot();
-  });
-
-  closeBtn.addEventListener('click', () => {
-    cancelAnimationFrame(loopId);
-    disableInvincible();
-    stopAutoBot();
-    window.dinoModActive = false;
-    menu.remove();
-    style.remove();
-    location.reload();
-  });
-
-  mainLoop();
-})();
+  }, 50);
+}
