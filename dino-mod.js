@@ -17,7 +17,7 @@
       box-shadow: 0 0 10px #000a;
       user-select: none;
     }
-    #dinoModMenu button, #dinoModMenu input[type=checkbox], #dinoModMenu input[type=range] {
+    #dinoModMenu button, #dinoModMenu input[type=checkbox], #dinoModMenu input[type=number] {
       cursor: pointer;
     }
     #dinoModMenu button {
@@ -37,8 +37,13 @@
       font-size: 14px;
       user-select: none;
     }
-    #dinoModMenu input[type=range] {
+    #dinoModMenu input[type=number] {
       width: 100%;
+      padding: 5px;
+      border-radius: 4px;
+      border: none;
+      font-size: 14px;
+      box-sizing: border-box;
     }
   `;
   document.head.appendChild(style);
@@ -49,8 +54,8 @@
     <div><b>Dino Mod v2</b></div>
     
     <label>
-      Velocidade: <span id="speedValue">10</span>
-      <input type="range" min="5" max="100" value="10" id="speedRange" />
+      Velocidade (5 a 100):
+      <input type="number" min="5" max="100" value="10" id="speedInput" />
     </label>
     
     <label>
@@ -69,6 +74,7 @@
   `;
   document.body.appendChild(menu);
 
+  // Aqui você define a velocidade inicial (mas pode mudar no input)
   let speed = 10;
   let invincible = false;
   let autoBot = false;
@@ -76,8 +82,7 @@
   let loopId;
   let botInterval;
 
-  const speedRange = document.getElementById('speedRange');
-  const speedValue = document.getElementById('speedValue');
+  const speedInput = document.getElementById('speedInput');
   const invincibleCheckbox = document.getElementById('invincibleCheckbox');
   const autoBotCheckbox = document.getElementById('autoBotCheckbox');
   const scoreDisplay = document.getElementById('scoreDisplay');
@@ -160,7 +165,6 @@
       clearInterval(botInterval);
       botInterval = null;
     }
-    // Garantir que o dino não fique parado no ar
     if (window.Runner && Runner.instance_ && Runner.instance_.tRex) {
       const dino = Runner.instance_.tRex;
       dino.jumping = false;
@@ -191,9 +195,12 @@
     loopId = requestAnimationFrame(mainLoop);
   }
 
-  speedRange.addEventListener('input', e => {
-    speed = Number(e.target.value);
-    speedValue.textContent = speed;
+  speedInput.addEventListener('input', e => {
+    let val = Number(e.target.value);
+    if (val < 5) val = 5;
+    if (val > 100) val = 100;
+    speed = val;
+    speedInput.value = val;
     updateSpeed();
   });
 
