@@ -2,7 +2,6 @@
   if (window.dinoModActive) return alert('Script já ativo!');
   window.dinoModActive = true;
 
-  // --- Estilos do menu ---
   const style = document.createElement('style');
   style.textContent = `
     #dinoModMenu {
@@ -44,7 +43,6 @@
   `;
   document.head.appendChild(style);
 
-  // --- Criar menu ---
   const menu = document.createElement('div');
   menu.id = 'dinoModMenu';
   menu.innerHTML = `
@@ -71,12 +69,12 @@
   `;
   document.body.appendChild(menu);
 
-  // --- Variáveis de controle ---
   let speed = 10;
   let invincible = false;
   let autoBot = false;
   let maxScore = 0;
   let loopId;
+  let botInterval;
 
   const speedRange = document.getElementById('speedRange');
   const speedValue = document.getElementById('speedValue');
@@ -85,14 +83,12 @@
   const scoreDisplay = document.getElementById('scoreDisplay');
   const closeBtn = document.getElementById('closeDinoMod');
 
-  // --- Função para setar velocidade ---
   function updateSpeed() {
     if (window.Runner && Runner.instance_) {
       Runner.instance_.setSpeed(speed);
     }
   }
 
-  // --- Invencibilidade discreta (wrapper que bloqueia gameOver sem sobrescrever direto) ---
   let originalGameOver;
   function enableInvincible() {
     if (!window.Runner || !Runner.instance_) return;
@@ -122,8 +118,6 @@
     }
   }
 
-  // --- Bot automático: detecta obstáculos no canvas e simula pulo ---
-  let botInterval;
   function startAutoBot() {
     if (!window.Runner || !Runner.instance_) return;
     if (botInterval) return;
@@ -166,18 +160,17 @@
       clearInterval(botInterval);
       botInterval = null;
     }
-    // Certificar que o dino fica visível e na posição correta
+    // Garantir que o dino não fique parado no ar
     if (window.Runner && Runner.instance_ && Runner.instance_.tRex) {
       const dino = Runner.instance_.tRex;
-      dino.ducking = false;
       dino.jumping = false;
+      dino.ducking = false;
       dino.groundYPos = Runner.instance_.config.BOTTOM_PAD;
       dino.setDuck(false);
       dino.update(0, 0);
     }
   }
 
-  // --- Atualiza pontuação máxima ---
   function updateScore() {
     const scoreContainer = document.querySelector('.score-container');
     if (scoreContainer) {
@@ -189,7 +182,6 @@
     }
   }
 
-  // --- Loop principal ---
   function mainLoop() {
     updateSpeed();
     updateScore();
@@ -199,7 +191,6 @@
     loopId = requestAnimationFrame(mainLoop);
   }
 
-  // --- Eventos do menu ---
   speedRange.addEventListener('input', e => {
     speed = Number(e.target.value);
     speedValue.textContent = speed;
