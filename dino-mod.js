@@ -1,4 +1,4 @@
-javascript:(() => {
+(() => {
   if (window.dinoModActive) return alert('Script já ativo!');
   window.dinoModActive = true;
 
@@ -52,7 +52,7 @@ javascript:(() => {
     
     <label>
       Velocidade: <span id="speedValue">10</span>
-      <input type="range" min="5" max="50" value="10" id="speedRange" />
+      <input type="range" min="5" max="100" value="10" id="speedRange" />
     </label>
     
     <label>
@@ -99,12 +99,8 @@ javascript:(() => {
     if (!originalGameOver) {
       originalGameOver = Runner.instance_.gameOver.bind(Runner.instance_);
       Runner.instance_.gameOver = function() {
-        // Intercepta chamada de gameOver e não deixa o jogo acabar
         if (!invincible) {
           originalGameOver();
-        } else {
-          // Poderia colocar aqui algum feedback ou efeito, se quiser
-          // console.log('Invencível ativo: gameOver bloqueado');
         }
       };
     }
@@ -130,7 +126,7 @@ javascript:(() => {
   let botInterval;
   function startAutoBot() {
     if (!window.Runner || !Runner.instance_) return;
-    if (botInterval) return; // já rodando
+    if (botInterval) return;
 
     const canvas = document.querySelector('canvas.runner-canvas');
     if (!canvas) return;
@@ -141,32 +137,26 @@ javascript:(() => {
     botInterval = setInterval(() => {
       if (!autoBot || !Runner.instance_ || Runner.instance_.crashed) return;
 
-      // Posição e tamanho aproximada da área onde aparecem obstáculos
-      // Ajuste valores se precisar!
-      const startX = 90; // início da área de scan
-      const width = 30;  // largura da área
-      const height = 30; // altura da área
+      const startX = 90;
+      const width = 30;
+      const height = 30;
 
-      // Pega os pixels da área (posição fixa na canvas)
       const imageData = ctx.getImageData(startX, canvas.height - height - 10, width, height);
 
-      // Procura pixels escuros (obstáculos)
       let obstacleFound = false;
       for(let i = 0; i < imageData.data.length; i += 4) {
         const r = imageData.data[i];
         const g = imageData.data[i+1];
         const b = imageData.data[i+2];
         const alpha = imageData.data[i+3];
-        // Considera pixel como obstáculo se não for branco (255,255,255)
         if (alpha > 0 && (r < 100 || g < 100 || b < 100)) {
           obstacleFound = true;
           break;
         }
       }
 
-      if(obstacleFound && dino.jumping === false && dino.ducking === false) {
-        // Simula pulo
-        Runner.instance_.tRex.startJump();
+      if(obstacleFound && !dino.jumping && !dino.ducking) {
+        dino.startJump();
       }
     }, 50);
   }
@@ -175,6 +165,15 @@ javascript:(() => {
     if (botInterval) {
       clearInterval(botInterval);
       botInterval = null;
+    }
+    // Certificar que o dino fica visível e na posição correta
+    if (window.Runner && Runner.instance_ && Runner.instance_.tRex) {
+      const dino = Runner.instance_.tRex;
+      dino.ducking = false;
+      dino.jumping = false;
+      dino.groundYPos = Runner.instance_.config.BOTTOM_PAD;
+      dino.setDuck(false);
+      dino.update(0, 0);
     }
   }
 
